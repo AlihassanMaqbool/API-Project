@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dragon Ball Characters</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
+
+        body {
+            background: #0f0f0f;
+            padding: 30px;
+            color: #fff;
+        }
+
+        /* GRID LAYOUT */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 25px;
+            margin-top: 10px;
+        }
+
+        /* CARD */
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            padding: 15px;
+            transition: 0.3s;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .card:hover {
+            transform: translateY(-7px) scale(1.03);
+            box-shadow: 0px 10px 25px rgba(255, 255, 255, 0.1);
+        }
+
+        .card img {
+            width: 100%;
+            height: 300px;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+
+
+        .card h3 {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* POPUP */
+        #popup {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        #popupContent {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 10px;
+            width: 350px;
+            /* height: 600px; */
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(14px);
+            border-radius: 18px;
+            color: #fff;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        #popupContent img {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 300px;
+            width: 180px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            margin-left: 60px;
+        }
+
+        #closeBtn {
+            margin-top: 15px;
+            padding: 12px 20px;
+            border: none;
+            background: #ff4444;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        #closeBtn:hover {
+            background: #ff0000;
+        }
+
+        /* SEARCH BAR */
+        #searchBar {
+            position: fixed;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 320px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.25);
+            transition: 0.4s;
+            z-index: 9999;
+        }
+
+        #searchBar.show {
+            top: 20px;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            outline: none;
+            border-radius: 8px;
+        }
+
+        #closeSearch {
+            padding: 8px 10px;
+            border: none;
+            background: #ff3333;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #closeSearch:hover {
+            background: red;
+        }
+
+        /* PAGINATION */
+        #pagination {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .page-btn {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .page-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-3px);
+        }
+
+        .page-btn.active {
+            background: #ff9800;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- POPUP -->
+    <div id="popup">
+        <div id="popupContent"></div>
+    </div>
+
+    <!-- SEARCH BAR -->
+    <div id="searchBar">
+        <input type="text" id="searchInput" placeholder="Search character...">
+        <button id="closeSearch">✖</button>
+    </div>
+
+    <!-- CARD GRID -->
+    <div class="grid" id="grid"></div>
+
+
+    <!-- CARD GRID -->
+    <div class="grid" id="grid"></div>
+
+    <!-- PAGINATION -->
+    <div id="pagination"></div>
+
+    <script>
+
+        const api = "https://dragonball-api.com/api/characters";
+
+        const data = async () => {
+
+            const response = await fetch(api);
+            const result = await response.json();
+            const characters = result.items;
+
+            const grid = document.getElementById("grid");
+
+            characters.forEach(character => {
+
+                const card = document.createElement("div");
+                card.className = "card";
+
+                card.innerHTML = `
+                    <img src="${character.image}">
+                    <h3>${character.name}</h3>
+                `;
+
+                grid.append(card);
+
+                card.addEventListener("click", () => showPopup(character));
+            });
+        };
+
+        document.addEventListener("DOMContentLoaded", data);
+
+
+        // POPUP
+        function showPopup(character) {
+
+            const popup = document.getElementById("popup");
+            const content = document.getElementById("popupContent");
+
+            content.innerHTML = `
+                <img src="${character.image}">
+                <h2>${character.name}</h2>
+                <p><b>Race:</b> ${character.race || "Unknown"}</p>
+                <p><b>Gender:</b> ${character.gender || "Unknown"}</p>
+                <p><b>Ki:</b> ${character.ki}</p>
+                <p><b>Affiliation:</b> ${character.affiliation || "None"}</p>
+
+                <button id="closeBtn">Close</button>
+            `;
+
+            popup.style.display = "flex";
+
+            document.getElementById("closeBtn").onclick = () => {
+                popup.style.display = "none";
+            };
+        }
+
+
+        // SEARCH BAR
+        document.addEventListener("keydown", function (event) {
+            if (event.ctrlKey && event.key === "f") {
+                event.preventDefault();
+                document.getElementById("searchBar").classList.add("show");
+                setTimeout(() => document.getElementById("searchInput").focus(), 200);
+            }
+        });
+
+        document.getElementById("closeSearch").onclick = () => {
+            document.getElementById("searchBar").classList.remove("show");
+            document.getElementById("searchInput").value = "";
+            filterCards("");
+        };
+
+        document.getElementById("searchInput").addEventListener("input", function () {
+            filterCards(this.value.toLowerCase());
+        });
+
+        function filterCards(text) {
+            const cards = document.querySelectorAll(".card");
+
+            cards.forEach(card => {
+                const name = card.querySelector("h3").textContent.toLowerCase();
+                card.style.display = name.includes(text) ? "block" : "none";
+            });
+        }
+
+
+
+
+
+        let currentPage = 1;
+        let limit = 20;  // har page par 20 characters
+        const apiBase = "https://dragonball-api.com/api/characters";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadPage(currentPage);
+        });
+
+        async function loadPage(page) {
+
+            const response = await fetch(`${apiBase}?page=${page}&limit=${limit}`);
+            const result = await response.json();
+
+            const characters = result.items;
+            const totalPages = result.meta.totalPages;
+
+            const grid = document.getElementById("grid");
+            grid.innerHTML = "";
+
+            // Cards Bana Rahe Hain
+            characters.forEach(character => {
+                const card = document.createElement("div");
+                card.className = "card";
+
+                card.innerHTML = `
+                <img src="${character.image}">
+                <h3>${character.name}</h3>
+            `;
+
+                card.addEventListener("click", () => showPopup(character));
+                grid.append(card);
+            });
+
+            // Pagination Buttons
+            renderPagination(totalPages, page);
+        }
+
+        // Pagination Dikhana
+        function renderPagination(total, current) {
+            const container = document.getElementById("pagination");
+            container.innerHTML = "";
+
+            // Previous Button
+            if (current > 1) {
+                addPageButton("Back", current - 1);
+            }
+
+            // Page Numbers
+            for (let i = 1; i <= total; i++) {
+                addPageButton(i, i, i === current);
+            }
+
+            // Next Button
+            if (current < total) {
+                addPageButton("Next", current + 1);
+            }
+        }
+
+        function addPageButton(text, page, isActive = false) {
+            const btn = document.createElement("button");
+            btn.className = "page-btn";
+            if (isActive) btn.classList.add("active");
+
+            btn.innerText = text;
+
+            btn.onclick = () => {
+                currentPage = page;
+                loadPage(page);
+            };
+
+            document.getElementById("pagination").append(btn);
+        }
+
+
+
+        // // POPUP
+        // function showPopup(character) {
+        //     const popup = document.getElementById("popup");
+        //     const content = document.getElementById("popupContent");
+
+        //     content.innerHTML = `
+        //     <img src="${character.image}">
+        //     <h2>${character.name}</h2>
+        //     <p><b>نسل:</b> ${character.race || "Unknown"}</p>
+        //     <p><b>جنس:</b> ${character.gender || "Unknown"}</p>
+        //     <p><b>Ki:</b> ${character.ki}</p>
+        //     <p><b>Affiliation:</b> ${character.affiliation || "None"}</p>
+
+        //     <button id="closeBtn">Close</button>
+        // `;
+
+        //     popup.style.display = "flex";
+        //     document.getElementById("closeBtn").onclick = () => popup.style.display = "none";
+        // }
+
+
+
+        // // SEARCH BAR
+        // document.addEventListener("keydown", function (event) {
+        //     if (event.ctrlKey && event.key === "f") {
+        //         event.preventDefault();
+        //         document.getElementById("searchBar").classList.add("show");
+        //         setTimeout(() => document.getElementById("searchInput").focus(), 200);
+        //     }
+        // });
+
+        // document.getElementById("closeSearch").onclick = () => {
+        //     document.getElementById("searchBar").classList.remove("show");
+        //     document.getElementById("searchInput").value = "";
+        //     filterCards("");
+        // };
+
+        // document.getElementById("searchInput").addEventListener("input", function () {
+        //     filterCards(this.value.toLowerCase());
+        // });
+
+        // function filterCards(text) {
+        //     const cards = document.querySelectorAll(".card");
+
+        //     cards.forEach(card => {
+        //         const name = card.querySelector("h3").textContent.toLowerCase();
+        //         card.style.display = name.includes(text) ? "block" : "none";
+        //     });
+        // }
+
+
+
+
+    </script>
+
+</body>
+
+</html>
